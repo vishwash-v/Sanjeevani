@@ -146,7 +146,7 @@ We built a premium glassmorphic interface with:
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/vishwash-v/Sanjeevani.git
 cd pharma-guard
 
 # Install dependencies
