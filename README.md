@@ -23,7 +23,7 @@
 
 | # | Requirement | Link |
 |---|-------------|------|
-| 1 | **Live Demo** | sanjeevani-roan.vercel.app |
+| 1 | **Live Demo** | https://sanjeevani-roan.vercel.app/ |
 | 2 | **LinkedIn Video** | [Video Link — Coming Soon] |
 | 3 | **GitHub Repository** | [github.com/vishwash-v/Sanjeevani](https://github.com/vishwash-v/Sanjeevani) |
 | 4 | **README.md** | You're reading it! |
