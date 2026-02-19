@@ -19,7 +19,7 @@
 
 ---
 
-## 🔗 Submission Links
+##   Submission Links
 
 | # | Requirement | Link |
 |---|-------------|------|
@@ -30,7 +30,7 @@
 
 ---
 
-## 📋 Table of Contents
+##   Table of Contents
 
 - [The Problem](#-the-problem)
 - [Our Solution](#-our-solution-sanjeevani)
@@ -53,7 +53,7 @@
 
 ---
 
-## 🚨 The Problem
+##   The Problem
 
 **Adverse drug reactions (ADRs) are the 4th leading cause of death in hospitals.** Every year, over 2 million people are hospitalized due to medications that interact dangerously with their genetic makeup. A painkiller that works perfectly for one patient can cause fatal respiratory depression in another — not because of the wrong diagnosis, but because of invisible genetic differences in how their bodies metabolize drugs.
 
@@ -71,7 +71,7 @@ The science to prevent this already exists. **Pharmacogenomics** — the study o
 
 ---
 
-## 💡 Our Solution: Sanjeevani
+##   Our Solution: Sanjeevani
 
 Sanjeevani is a **complete, end-to-end pharmacogenomic risk prediction system** that takes a patient's raw VCF file and produces clinically actionable drug safety assessments in seconds.
 
@@ -101,9 +101,9 @@ Patient VCF File ──→ Parse & Validate ──→ Extract Pharma Variants �
 
 ---
 
-## ✨ Key Features
+##   Key Features
 
-### 1. 🧪 Production-Grade VCF Parser (v5 — Edge-Case Hardened)
+### 1.   Production-Grade VCF Parser (v5 — Edge-Case Hardened)
 Our custom-built VCF parser handles **7 validated exception scenarios** that real-world clinical VCF files throw at you:
 
 | Exception | How Sanjeevani Handles It |
@@ -122,13 +122,13 @@ Additionally:
 - **0/0 genotype filtering**: Homozygous reference (0/0) variants are correctly excluded from detected variants — only actual mutations (0/1, 1/1) are reported
 - **Multi-allelic site handling**: Properly processes complex genotypes
 
-### 2. 🎯 CPIC-Aligned Star Allele Calling
+### 2.   CPIC-Aligned Star Allele Calling
 - Maps detected variants to **27 pharmacogenomic variant definitions** across 6 genes
 - Supports **compound heterozygous resolution** (e.g., CYP2C19 *2 + *3 = *2/*3 → Poor Metabolizer)
 - Uses **weighted matching** for partial variant hits
 - Properly distinguishes heterozygous (0/1) from homozygous (1/1) for diplotype construction
 
-### 3. 📊 Multi-Factor Risk Engine (Not a Simple Lookup Table)
+### 3.   Multi-Factor Risk Engine (Not a Simple Lookup Table)
 Our risk engine goes beyond basic phenotype-to-risk mapping:
 
 - **Activity Score Calculation** following CPIC's standardized methodology (Caudle et al., 2017)
@@ -143,20 +143,20 @@ Our risk engine goes beyond basic phenotype-to-risk mapping:
 - **ML-calibrated confidence scoring**: Honestly reports prediction certainty based on variant count, functional impact, and activity score extremity
 - **Severity escalation**: Automatically escalates severity when multiple no-function variants are detected
 
-### 4. 🤖 Google Gemini 2.0 Flash AI Explanations
+### 4.   Google Gemini 2.0 Flash AI Explanations
 - Generates **structured clinical explanations** with mechanism of action, variant-specific effects, and clinical context
 - Uses **structured JSON output** (not free-form text) for consistency
 - Sends only **anonymized summaries** (drug, gene, diplotype, risk) — never raw VCF data
 - **Graceful fallback**: If no API key is configured or the API fails, pre-computed CPIC-based explanations are used automatically
 
-### 5. 🏥 Clinical Accuracy Measures
+### 5.   Clinical Accuracy Measures
 - **SLCO1B1 correctly identified as a hepatic uptake transporter** (OATP1B1), not an enzyme
 - **Panel limitation disclaimers**: Warfarin results note that VKORC1 is not tested; Azathioprine results note that NUDT15 is not tested
 - **CPIC clinical action terms** sourced directly from published guidelines
 - **Alternative drug recommendations** for every unsafe result
 - **Clinical disclaimer** on every analysis output
 
-### 6. 🔒 Privacy-First Architecture (Zero Storage)
+### 6.   Privacy-First Architecture (Zero Storage)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -185,7 +185,7 @@ Our risk engine goes beyond basic phenotype-to-risk mapping:
 | **No Tracking** | Zero cookies, zero analytics, zero third-party scripts |
 | **API Transparency** | Every response includes `privacy.data_stored: false` metadata |
 
-### 7. 🎨 Premium UI/UX Design
+### 7.   Premium UI/UX Design
 - **Apple-inspired glassmorphic design** with frosted glass panels and mesh gradient backgrounds
 - **Framer Motion animations** throughout — smooth transitions, staggered card reveals
 - **Full dark mode** with separate design tokens and color palettes
@@ -196,7 +196,7 @@ Our risk engine goes beyond basic phenotype-to-risk mapping:
 - **Responsive design** that works on desktop, tablet, and mobile
 - **Sanjeevani watermark** visible in both light and dark modes
 
-### 8. 🛡️ Comprehensive Error Handling
+### 8.   Comprehensive Error Handling
 - **Frontend validation**: File type (`.vcf` only), file size (5MB max), drug selection required
 - **User-friendly error messages** — not generic "something went wrong" but specific, actionable guidance
 - **Graceful missing annotation handling** — missing rsID, QUAL, FILTER, FORMAT fields all handled with warnings
@@ -205,7 +205,7 @@ Our risk engine goes beyond basic phenotype-to-risk mapping:
 
 ---
 
-## 🏗️ System Architecture
+##   System Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -246,7 +246,7 @@ Our risk engine goes beyond basic phenotype-to-risk mapping:
 
 ---
 
-## 🔬 How It Works — Technical Pipeline
+##   How It Works — Technical Pipeline
 
 ### Step 1: VCF Parsing & Quality Control
 ```
@@ -313,7 +313,7 @@ Anonymized Result → Structured Prompt → Gemini 2.0 Flash → JSON Response
 
 ---
 
-## 💊 Supported Drug–Gene Pairs
+##   Supported Drug–Gene Pairs
 
 | Drug | Gene | Clinical Use | What Genetics Can Reveal |
 |------|------|-------------|------------------------|
@@ -326,7 +326,7 @@ Anonymized Result → Structured Prompt → Gemini 2.0 Flash → JSON Response
 
 ---
 
-## 🛡️ Error Handling
+##   Error Handling
 
 ### Frontend Validation
 | Check | Error Message |
@@ -356,7 +356,7 @@ Anonymized Result → Structured Prompt → Gemini 2.0 Flash → JSON Response
 
 ---
 
-## 🛠️ Tech Stack
+##   Tech Stack
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
@@ -371,7 +371,7 @@ Anonymized Result → Structured Prompt → Gemini 2.0 Flash → JSON Response
 
 ---
 
-## 🚀 Installation & Setup
+##   Installation & Setup
 
 ### Prerequisites
 - **Node.js** 18+ (recommended: 22.x)
@@ -403,7 +403,7 @@ Open **[http://localhost:3000](http://localhost:3000)** and you're ready to go!
 |----------|-------------|----------|
 | `GEMINI_API_KEY` | Google Gemini API key for AI explanations | **Optional** — fallback explanations work without it |
 
-> 💡 **Don't have a key?** Sanjeevani works perfectly without one — you'll get pre-computed CPIC-based explanations. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) for the full AI experience.
+>   **Don't have a key?** Sanjeevani works perfectly without one — you'll get pre-computed CPIC-based explanations. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) for the full AI experience.
 
 ### Deployment
 
@@ -418,7 +418,7 @@ Add `GEMINI_API_KEY` in Vercel Environment Variables settings.
 
 ---
 
-## 📖 Usage Guide
+##   Usage Guide
 
 ### Step-by-Step
 
@@ -440,7 +440,7 @@ Click **"Try a sample file"** in the upload area to load a pre-configured VCF wi
 
 ---
 
-## 📁 Sample VCF Files for Testing
+##   Sample VCF Files for Testing
 
 All sample files are included in `public/sample-vcf/`:
 
@@ -465,7 +465,7 @@ All sample files are included in `public/sample-vcf/`:
 
 ---
 
-## 📡 API Documentation
+##   API Documentation
 
 ### `POST /api/analyze`
 
@@ -558,7 +558,7 @@ Returns raw parsing output for debugging — shows every parsed record, matched 
 
 ---
 
-## 📚 Data Sources & References
+##   Data Sources & References
 
 ### Pharmacogenomics Databases
 
@@ -595,7 +595,7 @@ Returns raw parsing output for debugging — shows every parsed record, matched 
 
 ---
 
-## 🏆 What Makes Sanjeevani Unique
+##   What Makes Sanjeevani Unique
 
 | Aspect | Typical Hackathon Projects | Sanjeevani |
 |--------|---------------------------|------------|
@@ -612,7 +612,7 @@ Returns raw parsing output for debugging — shows every parsed record, matched 
 
 ---
 
-## 🧗 Challenges We Faced
+##   Challenges We Faced
 
 **The VCF parser was our biggest struggle.** We went through **5 iterations** — each time real-world VCF files revealed new edge cases: missing FILTER columns, multi-allelic sites, genome builds not declared in headers, genotype quality issues. Version 5 handles 7 distinct exception scenarios because in healthcare, "it works on the happy path" isn't acceptable. 
 
@@ -624,7 +624,7 @@ Returns raw parsing output for debugging — shows every parsed record, matched 
 
 ---
 
-## 👥 Team NextGen
+##   Team NextGen
 
 | Member | Role |
 |--------|------|
@@ -635,7 +635,7 @@ Returns raw parsing output for debugging — shows every parsed record, matched 
 
 ---
 
-## ⚠️ Disclaimer
+##   Disclaimer
 
 Sanjeevani is built for **research and educational purposes only**. It is not a certified medical device and should not replace professional pharmacogenomic consultation. Risk labels are algorithmically derived from CPIC-standardized activity scores and are intended to **assist — not replace** — clinical decision-making. The prescribing clinician's judgment, informed by published CPIC guidelines, remains the final authority on therapeutic decisions.
 
@@ -643,7 +643,7 @@ Sanjeevani is built for **research and educational purposes only**. It is not a 
 
 <div align="center">
 
-Built with sleepless nights and strong coffee ☕🧬
+Built with sleepless nights and strong coffee 
 
 **RIFT 2026 Hackathon** | HealthTech Track | PS3
 
