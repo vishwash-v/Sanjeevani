@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+##reference=GRCh38
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene name">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	PATIENT
+22	42127198	rs16947	G	A	85	PASS	GENE=CYP2D6	GT:DP	0/1:38
+22	42126495	rs1135840	C	G	82	PASS	GENE=CYP2D6	GT:DP	0/1:35
+12	21176804	rs2306283	A	G	90	PASS	GENE=SLCO1B1	GT:DP	0/1:40
