@@ -24,7 +24,7 @@
 | # | Requirement | Link |
 |---|-------------|------|
 | 1 | **Live Demo** | https://sanjeevani-roan.vercel.app/ |
-| 2 | **LinkedIn Video** | [Video Link — Coming Soon] |
+| 2 | **LinkedIn Video** | https://www.linkedin.com/posts/vishwas-h-v-a1a573359_rift2026-pharmaguard-pharmacogenomics-activity-7430419834363949056-i1Me?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFlAHPYBKB1Q9O2SPuL0Tai4nDbwH6H6ZNw |
 | 3 | **GitHub Repository** | [github.com/vishwash-v/Sanjeevani](https://github.com/vishwash-v/Sanjeevani) |
 | 4 | **README.md** | You're reading it! |
 
