@@ -53,7 +53,7 @@
 
 ---
 
-##   The Problem
+##  The Problem
 
 **Adverse drug reactions (ADRs) are the 4th leading cause of death in hospitals.** Every year, over 2 million people are hospitalized due to medications that interact dangerously with their genetic makeup. A painkiller that works perfectly for one patient can cause fatal respiratory depression in another — not because of the wrong diagnosis, but because of invisible genetic differences in how their bodies metabolize drugs.
 
