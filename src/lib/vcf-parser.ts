@@ -245,8 +245,9 @@ export function validateVCF(vcfContent: string): { valid: boolean; error?: strin
 //                     compound het support, star-allele dedup
 // ═══════════════════════════════════════════════════════════════
 
-export function extractPharmaVariants(records: VCFRecord[], warnings: ParseWarning[] = []): DetectedVariant[] {
+export function extractPharmaVariants(records: VCFRecord[], warnings: ParseWarning[] = []): { variants: DetectedVariant[]; coveredGenes: Set<GeneSymbol> } {
     const variants: DetectedVariant[] = [];
+    const coveredGenes = new Set<GeneSymbol>();
     const seenStarAlleles = new Set<string>();
     const seenPositions = new Set<string>();
 
@@ -275,6 +276,8 @@ export function extractPharmaVariants(records: VCFRecord[], warnings: ParseWarni
         if (!matched) {
             const geneName = record.info.GENE || record.info.GENEINFO?.split(':')[0] || '';
             if ((SUPPORTED_GENES as readonly string[]).includes(geneName)) {
+                // Track that this gene's loci appeared in the VCF
+                coveredGenes.add(geneName as GeneSymbol);
                 // Skip 0/0 (homozygous reference) — patient does not carry variant
                 if (!doesCarryVariant(record)) continue;
                 const posKey = `${geneName}:${record.chrom}:${record.pos}`;
@@ -298,6 +301,12 @@ export function extractPharmaVariants(records: VCFRecord[], warnings: ParseWarni
         }
 
         if (!matched) continue;
+
+        // ─── CRITICAL: Track gene as covered even for 0/0 reference calls ───
+        // This means the VCF actually sequenced this gene's loci.
+        // A 0/0 call AT a known locus = gene tested, variant not present (normal).
+        // This is different from the gene's loci not appearing in the VCF at all.
+        coveredGenes.add(matched.gene);
 
         // ─── Warn when GENE INFO is missing but variant was matched via database ───
         const infoGene = record.info.GENE || record.info.GENEINFO?.split(':')[0] || '';
@@ -335,7 +344,7 @@ export function extractPharmaVariants(records: VCFRecord[], warnings: ParseWarni
         });
     }
 
-    return variants;
+    return { variants, coveredGenes };
 }
 
 function doesCarryVariant(record: VCFRecord): boolean {
@@ -463,12 +472,13 @@ export function analyzeVCF(vcfContent: string): {
     records: VCFRecord[];
     variants: DetectedVariant[];
     profiles: GeneProfile[];
+    coveredGenes: Set<GeneSymbol>;
     warnings: ParseWarning[];
     error?: string;
 } {
     const validation = validateVCF(vcfContent);
     if (!validation.valid) {
-        return { records: [], variants: [], profiles: [], warnings: [], error: validation.error };
+        return { records: [], variants: [], profiles: [], coveredGenes: new Set(), warnings: [], error: validation.error };
     }
 
     const { records, warnings } = parseVCF(vcfContent);
@@ -481,11 +491,16 @@ export function analyzeVCF(vcfContent: string): {
             message: 'No variants passed quality filters. All variants were excluded due to low QUAL, failed FILTER, or insufficient read depth (DP).',
             severity: 'warning',
         });
-        return { records: [], variants: [], profiles: [], warnings };
+        return { records: [], variants: [], profiles: [], coveredGenes: new Set(), warnings };
     }
 
-    const variants = extractPharmaVariants(records, warnings);
+    const { variants, coveredGenes } = extractPharmaVariants(records, warnings);
     const profiles = buildGeneProfiles(variants);
 
-    return { records, variants, profiles, warnings };
+    // Also mark genes that have profiles as covered
+    for (const p of profiles) {
+        coveredGenes.add(p.gene);
+    }
+
+    return { records, variants, profiles, coveredGenes, warnings };
 }

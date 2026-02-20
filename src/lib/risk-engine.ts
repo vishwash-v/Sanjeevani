@@ -12,7 +12,8 @@ export function assessDrugRisk(
     drug: DrugName,
     profiles: GeneProfile[],
     patientId: string,
-    totalVariantsInVcf: number
+    totalVariantsInVcf: number,
+    coveredGenes: Set<string> = new Set()
 ): AnalysisResult {
     const startTime = Date.now();
     const gene = DRUG_GENE_MAP[drug];
@@ -21,10 +22,9 @@ export function assessDrugRisk(
     const geneProfile = profiles.find(p => p.gene === gene);
 
     if (!geneProfile) {
-        // No relevant variants found — but this doesn't mean Unknown!
-        // If other pharmacogenes WERE found, it likely means this gene is *1/*1 (normal)
-        const hasOtherGenes = profiles.length > 0;
-        return createWildTypeResult(drug, gene, patientId, startTime, hasOtherGenes, totalVariantsInVcf);
+        // Check if this gene's loci were actually present in the VCF
+        const geneCovered = coveredGenes.has(gene);
+        return createWildTypeResult(drug, gene, patientId, startTime, geneCovered, totalVariantsInVcf);
     }
 
     // ── Collect variant functional statuses for multi-factor risk computation ──
@@ -107,81 +107,112 @@ export function assessDrugRisk(
     };
 }
 
-// ─── When no variants found for a gene but VCF was successfully parsed ───
-// This is DIFFERENT from "hardcoded unknown" — it's a logical inference:
-// If the VCF was sequenced properly and no deleterious variants were found,
-// the patient most likely has wild-type (*1/*1) = Normal Metabolizer
+// ─── When no variants found for a gene ───
+// CRITICAL DISTINCTION:
+//   geneCovered=true  → VCF has records AT this gene's loci (even 0/0 ref calls)
+//                       → Gene was sequenced, no deleterious variants found → *1/*1 inferred
+//   geneCovered=false → VCF has NO records at this gene's loci
+//                       → Gene was NOT tested → Status Unknown (cannot infer anything)
+//
+// This prevents the clinical error of assuming normal function for untested genes.
+// "Absence of evidence ≠ evidence of absence"
 function createWildTypeResult(
     drug: DrugName,
     gene: GeneSymbol,
     patientId: string,
     startTime: number,
-    hasOtherGenes: boolean,
+    geneCovered: boolean,
     totalVariants: number
 ): AnalysisResult {
-    // If other pharmacogenes WERE detected, we have good coverage
-    // → Infer *1/*1 with moderate-to-high confidence
-    // If NO genes detected at all → lower confidence
-    const inferredConfidence = hasOtherGenes
-        ? Math.min(0.65 + (totalVariants * 0.02), 0.80)
-        : 0.40;
+    if (geneCovered) {
+        // Gene WAS tested — loci appeared in VCF but no deleterious variants found
+        // → Infer *1/*1 with moderate confidence
+        const inferredConfidence = Math.min(0.65 + (totalVariants * 0.02), 0.80);
 
-    const phenotypeCertainty = hasOtherGenes
-        ? 'NM (inferred from absence of known deleterious variants in sequencing data)'
-        : 'Unknown (no pharmacogenomic variants detected — consider targeted panel testing)';
-
-    return {
-        patient_id: patientId,
-        drug: drug,
-        timestamp: new Date().toISOString(),
-        risk_assessment: {
-            risk_label: hasOtherGenes ? 'Safe' : 'Unknown',
-            cpic_clinical_action: hasOtherGenes
-                ? `Use standard ${drug.toLowerCase()} dosing per clinical protocol`
-                : `Consult CPIC guidelines — insufficient genotype data for ${drug}`,
-            confidence_score: inferredConfidence,
-            severity: hasOtherGenes ? 'none' : 'low',
-        },
-        pharmacogenomic_profile: {
-            primary_gene: gene,
-            diplotype: '*1/*1 (wild-type)',
-            phenotype: hasOtherGenes ? 'NM' : 'Unknown',
-            detected_variants: [],
-        },
-        clinical_recommendation: {
-            action: hasOtherGenes
-                ? `No deleterious ${gene} variants detected in sequencing data. Wild-type *1/*1 inferred → Normal Metabolizer. Use ${drug} per standard dosing guidelines.`
-                : `No ${gene} variants detected. Unable to determine metabolizer status from available data. Recommend targeted pharmacogenomic panel testing for ${gene}.`,
-            dosing_guidance: hasOtherGenes
-                ? `Standard dosing appropriate. Activity score 2.0 (inferred normal). ${drug} is expected to be metabolized normally.`
-                : 'Standard dosing with enhanced monitoring until pharmacogenomic status is confirmed.',
-            alternative_drugs: [],
-            monitoring_recommendations: hasOtherGenes
-                ? (gene === 'CYP2C9' && drug === 'WARFARIN'
+        return {
+            patient_id: patientId,
+            drug: drug,
+            timestamp: new Date().toISOString(),
+            risk_assessment: {
+                risk_label: 'Safe',
+                cpic_clinical_action: `Use standard ${drug.toLowerCase()} dosing per clinical protocol`,
+                confidence_score: inferredConfidence,
+                severity: 'none',
+            },
+            pharmacogenomic_profile: {
+                primary_gene: gene,
+                diplotype: '*1/*1 (wild-type)',
+                phenotype: 'NM',
+                detected_variants: [],
+            },
+            clinical_recommendation: {
+                action: `No deleterious ${gene} variants detected in sequencing data. Wild-type *1/*1 inferred → Normal Metabolizer. Use ${drug} per standard dosing guidelines.`,
+                dosing_guidance: `Standard dosing appropriate. Activity score 2.0 (inferred normal). ${drug} is expected to be metabolized normally.`,
+                alternative_drugs: [],
+                monitoring_recommendations: gene === 'CYP2C9' && drug === 'WARFARIN'
                     ? 'Standard clinical monitoring per treatment guidelines. Note: This panel does not test VKORC1, which also significantly influences warfarin dose requirements. VKORC1 genotyping is recommended for comprehensive pharmacogenomic-guided dosing.'
                     : gene === 'TPMT' && drug === 'AZATHIOPRINE'
                         ? 'Standard clinical monitoring per treatment guidelines. Note: This panel does not test NUDT15, which can also affect thiopurine toxicity risk. NUDT15 genotyping may be considered for comprehensive assessment.'
-                        : 'Standard clinical monitoring per treatment guidelines.')
-                : `Consider ${gene} genotyping for definitive metabolizer status. Use standard monitoring until confirmed.`,
-            cpic_guideline_reference: `CPIC Guidelines for ${gene}`,
-        },
-        llm_generated_explanation: {
-            summary: '',
-            mechanism: hasOtherGenes
-                ? `${gene} was screened in the uploaded VCF data. No known loss-of-function, decreased-function, or increased-function variants were detected at established pharmacogenomic loci. By inference, the patient's diplotype is *1/*1 (wild-type), corresponding to Normal Metabolizer status with full ${gene === 'SLCO1B1' ? 'transporter function' : 'enzyme activity'} (activity score 2.0).`
-                : `${gene} variants were not detected in the uploaded VCF data. This may indicate wild-type status, or the sequencing panel may not have covered ${gene} loci. Targeted pharmacogenomic testing is recommended.`,
-            variant_specific_effects: phenotypeCertainty,
-            clinical_context: '',
-            references: [],
-        },
-        quality_metrics: {
-            vcf_parsing_success: true,
-            variants_detected: 0,
-            pharmacogenes_found: 0,
-            llm_explanation_generated: false,
-            processing_time_ms: Date.now() - startTime,
-        },
-    };
+                        : 'Standard clinical monitoring per treatment guidelines.',
+                cpic_guideline_reference: `CPIC Guidelines for ${gene}`,
+            },
+            llm_generated_explanation: {
+                summary: '',
+                mechanism: `${gene} was screened in the uploaded VCF data. No known loss-of-function, decreased-function, or increased-function variants were detected at established pharmacogenomic loci. By inference, the patient's diplotype is *1/*1 (wild-type), corresponding to Normal Metabolizer status with full ${gene === 'SLCO1B1' ? 'transporter function' : 'enzyme activity'} (activity score 2.0).`,
+                variant_specific_effects: 'NM (inferred from absence of known deleterious variants in sequencing data)',
+                clinical_context: '',
+                references: [],
+            },
+            quality_metrics: {
+                vcf_parsing_success: true,
+                variants_detected: 0,
+                pharmacogenes_found: 0,
+                llm_explanation_generated: false,
+                processing_time_ms: Date.now() - startTime,
+            },
+        };
+    } else {
+        // Gene was NOT tested — no loci for this gene appeared in VCF at all
+        // → Cannot determine genotype → Report Unknown
+        return {
+            patient_id: patientId,
+            drug: drug,
+            timestamp: new Date().toISOString(),
+            risk_assessment: {
+                risk_label: 'Unknown',
+                cpic_clinical_action: `${gene} genotype not available from this VCF — cannot determine ${drug} risk. Use standard clinical judgment.`,
+                confidence_score: 0.0,
+                severity: 'low',
+            },
+            pharmacogenomic_profile: {
+                primary_gene: gene,
+                diplotype: 'Indeterminate (gene not sequenced in this panel)',
+                phenotype: 'Unknown',
+                detected_variants: [],
+            },
+            clinical_recommendation: {
+                action: `${gene} was not tested in this VCF file. Genotype and metabolizer status cannot be determined. Use standard clinical judgment for ${drug} dosing.`,
+                dosing_guidance: `No pharmacogenomic guidance available for ${drug} — ${gene} genotype data is absent from the uploaded VCF. Consider ordering targeted ${gene} pharmacogenomic testing.`,
+                alternative_drugs: [],
+                monitoring_recommendations: `${gene} genotype not available. Consider targeted pharmacogenomic panel testing for ${gene}. Use standard monitoring until genotype is confirmed.`,
+                cpic_guideline_reference: `CPIC Guidelines for ${gene}`,
+            },
+            llm_generated_explanation: {
+                summary: '',
+                mechanism: `${gene} variants were not present in the uploaded VCF data. This VCF does not appear to cover ${gene} loci — the gene was likely not included in the sequencing panel. No genotype can be inferred. Targeted pharmacogenomic testing for ${gene} is recommended before making ${drug} dosing decisions.`,
+                variant_specific_effects: 'Unknown — gene not sequenced in this panel',
+                clinical_context: '',
+                references: [],
+            },
+            quality_metrics: {
+                vcf_parsing_success: true,
+                variants_detected: 0,
+                pharmacogenes_found: 0,
+                llm_explanation_generated: false,
+                processing_time_ms: Date.now() - startTime,
+            },
+        };
+    }
 }
 
 // ─── Full pipeline: VCF content + drugs → analysis results ───
@@ -190,7 +221,7 @@ export function runFullAnalysis(
     drugs: string[]
 ): { results: AnalysisResult[]; warnings: { line: number; field: string; message: string; severity: string }[]; error?: string } {
     // Parse VCF
-    const { variants, profiles, warnings, error } = analyzeVCF(vcfContent);
+    const { variants, profiles, coveredGenes, warnings, error } = analyzeVCF(vcfContent);
     if (error) {
         return { results: [], warnings: warnings || [], error };
     }
@@ -217,7 +248,7 @@ export function runFullAnalysis(
 
     // Run assessment for each drug
     const results = validDrugs.map(drug =>
-        assessDrugRisk(drug, profiles, patientId, variants.length)
+        assessDrugRisk(drug, profiles, patientId, variants.length, coveredGenes)
     );
 
     return { results, warnings };

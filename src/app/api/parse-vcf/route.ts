@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         const { records: allRecords, warnings } = parseVCF(vcfContent);
 
         // Extract pharmacogenomic variants
-        const pharmaVariants = extractPharmaVariants(allRecords);
+        const { variants: pharmaVariants } = extractPharmaVariants(allRecords);
 
         // Build gene profiles
         const profiles = buildGeneProfiles(pharmaVariants);
